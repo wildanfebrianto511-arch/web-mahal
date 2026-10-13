@@ -25,6 +25,7 @@
         .dashboard {
             width: 100%;
             max-width: 720px;
+            position: relative; /* untuk posisi popup absolut */
         }
 
         /* Header layout: judul kiri, jam kanan (stack pada layar kecil) */
@@ -104,15 +105,17 @@
             font-size: 12px;
         }
 
-        /* 4. Tombol */
+        /* 4. Tombol (dengan efek glitch petir) */
         .buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
             margin-top: 26px;
+            position: relative;
         }
 
         button {
+            position: relative;
             flex: 1;
             min-width: 130px;
             padding: 14px 18px;
@@ -121,9 +124,13 @@
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
+            transition: transform 0.12s ease, filter 0.12s ease;
+            overflow: visible;
+            z-index: 1;
+            background-clip: padding-box;
         }
 
+        /* Dasar warna tombol */
         .btn-add { color: #082f49; background: #38bdf8; }
         .btn-reset {
             color: #e2e8f0;
@@ -131,11 +138,87 @@
             border: 1px solid #475569;
         }
 
-        button:hover { filter: brightness(1.12); transform: translateY(-2px); }
+        button:hover { filter: brightness(1.08); transform: translateY(-2px); }
         button:active { transform: scale(0.98); }
         button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
 
-        /* 5. Pesan interaktif */
+        /* Efek "glitch petir" - layer overlay yang bergerak dan kilat */
+        .glitch {
+            --accent: rgba(56,189,248,0.95);
+        }
+        .glitch::before,
+        .glitch::after {
+            content: "";
+            position: absolute;
+            left: -6%;
+            top: -20%;
+            width: 112%;
+            height: 140%;
+            pointer-events: none;
+            border-radius: 12px;
+            opacity: 0;
+            transform: translate3d(0,0,0);
+            mix-blend-mode: screen;
+        }
+
+        /* kilatan linear gradient (efek petir) */
+        .glitch::before {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 45%, rgba(56,189,248,0.9) 55%, rgba(255,255,255,0) 100%);
+            filter: blur(10px);
+            animation: lightning 2.8s infinite;
+        }
+
+        /* noise/offset layer untuk kesan glitch */
+        .glitch::after {
+            background: linear-gradient(90deg, rgba(56,189,248,0.06), rgba(8,47,73,0.06));
+            filter: blur(4px);
+            animation: glitchShift 3.4s infinite;
+        }
+
+        @keyframes lightning {
+            0% { opacity: 0; transform: translateX(-120%) skewX(-10deg); }
+            6% { opacity: 0.9; transform: translateX(-10%) skewX(-6deg); }
+            8% { opacity: 0.3; transform: translateX(10%) skewX(6deg); }
+            9% { opacity: 1; transform: translateX(-6%) skewX(-3deg); }
+            12% { opacity: 0; transform: translateX(120%) skewX(10deg); }
+            100% { opacity: 0; transform: translateX(120%) skewX(10deg); }
+        }
+
+        @keyframes glitchShift {
+            0% { opacity: 0.02; transform: translateX(0) translateY(0) scaleX(1); }
+            20% { opacity: 0.06; transform: translateX(-2px) translateY(1px) scaleX(1.01); }
+            40% { opacity: 0.02; transform: translateX(1px) translateY(-1px) scaleX(0.99); }
+            60% { opacity: 0.08; transform: translateX(-1px) translateY(2px) scaleX(1.02); }
+            80% { opacity: 0.03; transform: translateX(0px) translateY(0px) scaleX(1); }
+            100% { opacity: 0.02; transform: translateX(0) translateY(0) scaleX(1); }
+        }
+
+        /* 5. Popup angka (baru) */
+        .number-popup {
+            position: absolute;
+            background: linear-gradient(180deg, rgba(10,30,50,0.95), rgba(6,16,28,0.95));
+            color: #e6f7ff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(58,140,255,0.18);
+            box-shadow: 0 10px 30px rgba(2,10,30,0.6), 0 0 24px rgba(56,189,248,0.06) inset;
+            font-weight: 800;
+            font-size: 20px;
+            transform-origin: center bottom;
+            transform: translateY(6px) scale(.8);
+            opacity: 0;
+            transition: transform 180ms cubic-bezier(.2,.9,.2,1), opacity 140ms ease;
+            pointer-events: none;
+            z-index: 50;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .number-popup.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* 6. Pesan interaktif */
         .message {
             min-height: 48px;
             margin-top: 22px;
@@ -146,7 +229,7 @@
             line-height: 1.5;
         }
 
-        /* 6. Panel Riwayat Aktivitas (baru) */
+        /* 7. Panel Riwayat Aktivitas (tetap) */
         .activity-panel {
             margin-top: 22px;
             padding: 18px;
@@ -199,7 +282,6 @@
             white-space: nowrap;
         }
 
-        /* scrollbar kecil agar sesuai tema */
         .activity-list::-webkit-scrollbar { width: 8px; }
         .activity-list::-webkit-scrollbar-thumb {
             background: rgba(56,189,248,0.12);
@@ -231,7 +313,7 @@
                     </p>
                 </div>
 
-                <!-- Jam digital (tetap ada seperti sebelumnya) -->
+                <!-- Jam digital (tetap ada) -->
                 <div id="clock" class="clock" role="status" aria-live="polite" aria-label="Jam digital lokal">
                     00:00:00
                 </div>
@@ -253,14 +335,14 @@
 
             <div class="buttons">
                 <button
-                    class="btn-add"
-                    onclick="tambahKlik()">
+                    class="glitch btn-add"
+                    onclick="tambahKlik(this)">
                     + Tambah Klik
                 </button>
 
                 <button
-                    class="btn-reset"
-                    onclick="resetKlik()">
+                    class="glitch btn-reset"
+                    onclick="resetKlik(this)">
                     Reset
                 </button>
             </div>
@@ -270,11 +352,10 @@
             </div>
         </section>
 
-        <!-- Panel Riwayat Aktivitas (baru) -->
+        <!-- Panel Riwayat Aktivitas -->
         <section class="activity-panel" aria-labelledby="riwayat-title">
             <h2 id="riwayat-title">Riwayat Aktivitas</h2>
 
-            <!-- role="log" + aria-live untuk pemberitahuan aksesibilitas non-intrusif -->
             <ul id="riwayat" class="activity-list" role="log" aria-live="polite" aria-relevant="additions">
                 <!-- Item aktivitas akan dirender di sini oleh JavaScript -->
             </ul>
@@ -284,6 +365,8 @@
             WILDAN TECH · HTML · CSS · JAVASCRIPT
         </footer>
 
+        <!-- Popup angka (elemen di DOM untuk digunakan ulang) -->
+        <div id="numberPopup" class="number-popup" aria-hidden="true"></div>
     </main>
 
     <script>
@@ -296,7 +379,64 @@
             document.getElementById("jumlahKlik").textContent = jumlah;
         }
 
-        function tambahKlik() {
+        // popup management
+        let popupTimeout = null;
+        const popupEl = document.getElementById("numberPopup");
+
+        function showNumberPopup(value, btnElement) {
+            if (!popupEl) return;
+
+            // isi popup
+            popupEl.textContent = String(value);
+
+            // posisi relatif ke .dashboard
+            const parent = document.querySelector(".dashboard");
+            const parentRect = parent.getBoundingClientRect();
+            const btnRect = btnElement.getBoundingClientRect();
+
+            // tampilkan dulu agar popup memiliki offsetWidth/Height
+            popupEl.classList.add("show");
+            popupEl.style.opacity = ""; // let CSS handle
+            popupEl.setAttribute("aria-hidden", "false");
+
+            // hitung posisi: di atas tombol, rata tengah
+            const popupWidth = popupEl.offsetWidth;
+            const popupHeight = popupEl.offsetHeight;
+
+            let left = (btnRect.left - parentRect.left) + (btnRect.width / 2) - (popupWidth / 2);
+            let top = (btnRect.top - parentRect.top) - popupHeight - 10;
+
+            // jika melewati sisi kiri/kanan, koreksi
+            const padding = 8;
+            const maxLeft = parent.clientWidth - popupWidth - padding;
+            if (left < padding) left = padding;
+            if (left > maxLeft) left = maxLeft;
+
+            // jika tidak cukup ruang di atas, tampilkan di bawah tombol
+            if (top < 0) {
+                top = (btnRect.top - parentRect.top) + btnRect.height + 10;
+            }
+
+            popupEl.style.left = left + "px";
+            popupEl.style.top = top + "px";
+
+            // reset animasi jika sudah ada timer
+            if (popupTimeout) {
+                clearTimeout(popupTimeout);
+            }
+
+            // tampilkan selama 900ms lalu sembunyikan
+            popupTimeout = setTimeout(() => {
+                popupEl.classList.remove("show");
+                popupEl.setAttribute("aria-hidden", "true");
+                popupTimeout = null;
+            }, 900);
+        }
+
+        function tambahKlik(btn) {
+            // jaga kompatibilitas kalau btn tidak dilewatkan
+            if (!btn) btn = document.querySelector(".btn-add");
+
             jumlah = jumlah + 1;
             perbaruiTampilan();
 
@@ -308,9 +448,14 @@
 
             // Catat ke riwayat aktivitas
             catatAktivitas("Penghitung bertambah menjadi " + jumlah);
+
+            // Tampilkan popup angka (angka saat ini setelah penambahan)
+            showNumberPopup(jumlah, btn);
         }
 
-        function resetKlik() {
+        function resetKlik(btn) {
+            if (!btn) btn = document.querySelector(".btn-reset");
+
             jumlah = 0;
             perbaruiTampilan();
 
@@ -321,6 +466,9 @@
 
             // Catat ke riwayat aktivitas
             catatAktivitas("Penghitung di-reset ke 0");
+
+            // Tampilkan popup angka (0)
+            showNumberPopup(jumlah, btn);
         }
 
         // ---------------------
@@ -338,15 +486,12 @@
         setInterval(updateClock, 1000);
 
         // ---------------------
-        // Riwayat Aktivitas (baru)
-        // - Simpan dalam array di memori (maks 10 item terbaru)
-        // - Tampilkan paling baru di atas
+        // Riwayat Aktivitas (tetap)
         // ---------------------
         const riwayatAktivitas = []; // setiap item: {msg: string, timestamp: Date}
         const MAX_RIWAYAT = 10;
 
         function formatTimestamp(date) {
-            // Format: YYYY-MM-DD HH:MM:SS
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, "0");
             const d = String(date.getDate()).padStart(2, "0");
@@ -358,15 +503,10 @@
 
         function catatAktivitas(pesan) {
             const now = new Date();
-            // tambahkan paling depan
             riwayatAktivitas.unshift({ msg: pesan, timestamp: now });
-
-            // batasi panjang array
             if (riwayatAktivitas.length > MAX_RIWAYAT) {
                 riwayatAktivitas.pop();
             }
-
-            // perbarui tampilan daftar
             renderRiwayat();
         }
 
@@ -374,10 +514,8 @@
             const container = document.getElementById("riwayat");
             if (!container) return;
 
-            // Kosongkan dulu
             container.innerHTML = "";
 
-            // Buat elemen untuk tiap item (sudah diurutkan: terbaru -> terlama)
             for (const item of riwayatAktivitas) {
                 const li = document.createElement("li");
                 li.className = "activity-item";
@@ -396,7 +534,6 @@
                 container.appendChild(li);
             }
 
-            // Jika kosong, tampilkan petunjuk
             if (riwayatAktivitas.length === 0) {
                 const li = document.createElement("li");
                 li.className = "activity-item";
@@ -407,13 +544,9 @@
             }
         }
 
-        // Inisialisasi awal: render kosong dan (opsional) catat bahwa dashboard dimuat
+        // Inisialisasi awal
         renderRiwayat();
-        // Opsional: catat saat halaman dimuat (bisa di-comment jika tidak diinginkan)
         catatAktivitas("Dashboard dimuat");
-
-        // Pastikan tidak ada tabrakan ID: digunakan -> jumlahKlik, status, pesan, clock, riwayat
-        // Semua fungsi lama tetap utuh dan memanggil catatAktivitas untuk merekam event.
     </script>
 </body>
 </html>
