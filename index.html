@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Wildan Tech Dashboard</title>
+
+    <style>
+        /* 1. Pengaturan dasar */
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            color: #f1f5f9;
+            background: #0b1120;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 2. Wadah dashboard */
+        .dashboard {
+            width: 100%;
+            max-width: 720px;
+        }
+
+        /* Header layout: judul kiri, jam kanan (stack pada layar kecil) */
+        .header { margin-bottom: 20px; }
+        .header-top {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        @media (max-width: 640px) {
+            .header-top { flex-direction: column; align-items: flex-start; }
+            .clock { align-self: stretch; text-align: right; width: 100%; }
+        }
+
+        .label {
+            color: #38bdf8;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+
+        h1 {
+            margin: 8px 0 6px;
+            font-size: clamp(28px, 5vw, 42px);
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        /* JAM DIGITAL */
+        .clock {
+            font-family: "Courier New", Courier, monospace;
+            font-weight: 700;
+            color: #e6f7ff;
+            background: linear-gradient(135deg, rgba(8,47,73,0.85) 0%, rgba(12,95,160,0.9) 100%);
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(58,140,255,0.18);
+            box-shadow: 0 8px 26px rgba(2,21,50,0.6), 0 0 18px rgba(56,189,248,0.06) inset;
+            font-size: clamp(14px, 2.8vw, 18px);
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(56,189,248,0.08);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        /* 3. Kartu penghitung */
+        .card {
+            padding: 28px;
+            background: #151f32;
+            border: 1px solid #26364f;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px #00000030;
+        }
+
+        .card-title {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .counter {
+            margin: 18px 0;
+            color: #38bdf8;
+            font-size: clamp(56px, 12vw, 80px);
+            font-weight: bold;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 7px 12px;
+            color: #7dd3fc;
+            background: #0c344a;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        /* 4. Tombol */
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 26px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 130px;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-add { color: #082f49; background: #38bdf8; }
+        .btn-reset {
+            color: #e2e8f0;
+            background: #29364b;
+            border: 1px solid #475569;
+        }
+
+        button:hover { filter: brightness(1.12); transform: translateY(-2px); }
+        button:active { transform: scale(0.98); }
+        button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+
+        /* 5. Pesan interaktif */
+        .message {
+            min-height: 48px;
+            margin-top: 22px;
+            padding: 14px;
+            color: #bae6fd;
+            background: #0b1729;
+            border-radius: 10px;
+            line-height: 1.5;
+        }
+
+        /* 6. Panel Riwayat Aktivitas (baru) */
+        .activity-panel {
+            margin-top: 22px;
+            padding: 18px;
+            background: linear-gradient(180deg, rgba(11,17,32,0.9), rgba(8,12,22,0.95));
+            border: 1px solid #233244;
+            border-radius: 14px;
+            color: #cbd5e1;
+        }
+
+        .activity-panel h2 {
+            margin: 0 0 10px;
+            font-size: 14px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .activity-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 12px;
+            background: linear-gradient(90deg, rgba(20,30,48,0.6), rgba(14,22,36,0.6));
+            border-radius: 10px;
+            border: 1px solid rgba(60,78,102,0.12);
+        }
+
+        .activity-msg {
+            color: #e6f7ff;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .activity-time {
+            color: #94a3b8;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* scrollbar kecil agar sesuai tema */
+        .activity-list::-webkit-scrollbar { width: 8px; }
+        .activity-list::-webkit-scrollbar-thumb {
+            background: rgba(56,189,248,0.12);
+            border-radius: 8px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: #64748b;
+            text-align: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="dashboard">
+
+        <header class="header">
+            <div class="header-top">
+                <div>
+                    <div class="label">MY FIRST TECH PROJECT</div>
+
+                    <h1>Wildan Tech Dashboard</h1>
+
+                    <p class="subtitle">
+                        Dashboard interaktif pertamaku.
+                        Belajar coding, satu fitur setiap saat.
+                    </p>
+                </div>
+
+                <!-- Jam digital (tetap ada seperti sebelumnya) -->
+                <div id="clock" class="clock" role="status" aria-live="polite" aria-label="Jam digital lokal">
+                    00:00:00
+                </div>
+            </div>
+        </header>
+
+        <section class="card" aria-labelledby="card-title">
+            <div id="card-title" class="card-title">
+                TOTAL TOMBOL DIKLIK
+            </div>
+
+            <div class="counter" id="jumlahKlik" aria-live="polite">
+                0
+            </div>
+
+            <span class="status" id="status">
+                ● SIAP DIGUNAKAN
+            </span>
+
+            <div class="buttons">
+                <button
+                    class="btn-add"
+                    onclick="tambahKlik()">
+                    + Tambah Klik
+                </button>
+
+                <button
+                    class="btn-reset"
+                    onclick="resetKlik()">
+                    Reset
+                </button>
+            </div>
+
+            <div class="message" id="pesan" role="status">
+                Selamat datang! Tekan Tambah Klik untuk memulai.
+            </div>
+        </section>
+
+        <!-- Panel Riwayat Aktivitas (baru) -->
+        <section class="activity-panel" aria-labelledby="riwayat-title">
+            <h2 id="riwayat-title">Riwayat Aktivitas</h2>
+
+            <!-- role="log" + aria-live untuk pemberitahuan aksesibilitas non-intrusif -->
+            <ul id="riwayat" class="activity-list" role="log" aria-live="polite" aria-relevant="additions">
+                <!-- Item aktivitas akan dirender di sini oleh JavaScript -->
+            </ul>
+        </section>
+
+        <footer class="footer">
+            WILDAN TECH · HTML · CSS · JAVASCRIPT
+        </footer>
+
+    </main>
+
+    <script>
+        // ---------------------
+        // Fitur lama: penghitung klik
+        // ---------------------
+        let jumlah = 0;
+
+        function perbaruiTampilan() {
+            document.getElementById("jumlahKlik").textContent = jumlah;
+        }
+
+        function tambahKlik() {
+            jumlah = jumlah + 1;
+            perbaruiTampilan();
+
+            document.getElementById("status").textContent = "● AKTIF";
+
+            document.getElementById("pesan").textContent =
+                "Mantap! Kamu sudah mengklik tombol sebanyak " +
+                jumlah + " kali. Terus belajar! 🚀";
+
+            // Catat ke riwayat aktivitas
+            catatAktivitas("Penghitung bertambah menjadi " + jumlah);
+        }
+
+        function resetKlik() {
+            jumlah = 0;
+            perbaruiTampilan();
+
+            document.getElementById("status").textContent = "● SIAP DIGUNAKAN";
+
+            document.getElementById("pesan").textContent =
+                "Penghitung berhasil direset ke angka nol.";
+
+            // Catat ke riwayat aktivitas
+            catatAktivitas("Penghitung di-reset ke 0");
+        }
+
+        // ---------------------
+        // Jam digital (tetap)
+        // ---------------------
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, "0");
+            const minutes = String(now.getMinutes()).padStart(2, "0");
+            const seconds = String(now.getSeconds()).padStart(2, "0");
+            const clockEl = document.getElementById("clock");
+            if (clockEl) clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // ---------------------
+        // Riwayat Aktivitas (baru)
+        // - Simpan dalam array di memori (maks 10 item terbaru)
+        // - Tampilkan paling baru di atas
+        // ---------------------
+        const riwayatAktivitas = []; // setiap item: {msg: string, timestamp: Date}
+        const MAX_RIWAYAT = 10;
+
+        function formatTimestamp(date) {
+            // Format: YYYY-MM-DD HH:MM:SS
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            const hh = String(date.getHours()).padStart(2, "0");
+            const mm = String(date.getMinutes()).padStart(2, "0");
+            const ss = String(date.getSeconds()).padStart(2, "0");
+            return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+        }
+
+        function catatAktivitas(pesan) {
+            const now = new Date();
+            // tambahkan paling depan
+            riwayatAktivitas.unshift({ msg: pesan, timestamp: now });
+
+            // batasi panjang array
+            if (riwayatAktivitas.length > MAX_RIWAYAT) {
+                riwayatAktivitas.pop();
+            }
+
+            // perbarui tampilan daftar
+            renderRiwayat();
+        }
+
+        function renderRiwayat() {
+            const container = document.getElementById("riwayat");
+            if (!container) return;
+
+            // Kosongkan dulu
+            container.innerHTML = "";
+
+            // Buat elemen untuk tiap item (sudah diurutkan: terbaru -> terlama)
+            for (const item of riwayatAktivitas) {
+                const li = document.createElement("li");
+                li.className = "activity-item";
+
+                const msg = document.createElement("div");
+                msg.className = "activity-msg";
+                msg.textContent = item.msg;
+
+                const time = document.createElement("div");
+                time.className = "activity-time";
+                time.textContent = formatTimestamp(item.timestamp);
+
+                li.appendChild(msg);
+                li.appendChild(time);
+
+                container.appendChild(li);
+            }
+
+            // Jika kosong, tampilkan petunjuk
+            if (riwayatAktivitas.length === 0) {
+                const li = document.createElement("li");
+                li.className = "activity-item";
+                li.style.justifyContent = "center";
+                li.style.color = "#64748b";
+                li.textContent = "Belum ada aktivitas. Gunakan tombol Tambah Klik atau Reset.";
+                container.appendChild(li);
+            }
+        }
+
+        // Inisialisasi awal: render kosong dan (opsional) catat bahwa dashboard dimuat
+        renderRiwayat();
+        // Opsional: catat saat halaman dimuat (bisa di-comment jika tidak diinginkan)
+        catatAktivitas("Dashboard dimuat");
+
+        // Pastikan tidak ada tabrakan ID: digunakan -> jumlahKlik, status, pesan, clock, riwayat
+        // Semua fungsi lama tetap utuh dan memanggil catatAktivitas untuk merekam event.
+    </script>
+</body>
+</html>
